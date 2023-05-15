@@ -3,7 +3,7 @@ in-situ acceleration-speed profile in team sports
 
 ______________________________________
 
-Force velocity profiling is not specific to team sports actions and acceleration-speed profiling can be done passively, save some proper testing sessions and bring continuous information about the athlete state of form evolution (Morin et al. 2021).
+Force velocity profiling is not specific to team sports actions but acceleration-speed profiling can be done passively, save some proper testing sessions and bring continuous information about the athlete state of form evolution (Morin et al. 2021).
 
 
 ## Raw data
