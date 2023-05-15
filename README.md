@@ -23,19 +23,20 @@ function [A0,V0,r2,dataOut] = accSpeedProfile(data,col)
 % dataOut is a table with 2 columns of speed and acceleration points retained
 ```
 
-By specifying a 2 color RGB matric you can personalize the colors of the figure output
-```MATLAB
-accSpeedProfile(data,col)
-```
-![alt text](https://github.com/PabRD/AS_Profile/blob/main/yourColor_AS.png)
-
-
 If you don't specify any 2nd input
 ```MATLAB
 accSpeedProfile(data)
 ```
 
 ![alt text](https://github.com/PabRD/AS_Profile/blob/main/basicColor_AS.png)
+
+
+By specifying a 2 color RGB matric you can personalize the colors of the figure output
+```MATLAB
+accSpeedProfile(data,col)
+```
+![alt text](https://github.com/PabRD/AS_Profile/blob/main/yourColor_AS.png)
+
 
 
 __________________________________
