@@ -7,14 +7,14 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Description: in-Situ acceleration-speed profiles
 % Based on Clavel and al. 2023 | Morin and al. 2021
-% data dw: https://libm-lab. univ-st-etienne.fr/as-profile/#/hom
+% data dw: https://libm-lab. univ-st-etienne.fr/as-profile/#/home
 clear
 close all
 clc
 tic
-% Import data
+
+% Import exemple data
 dat = importdata('exampleFile.csv');
-headers  = dat.textdata;
 data = dat.data;
 clearvars dat
 
@@ -32,127 +32,64 @@ col = [    0.4039         0    0.1216
     0.3020    0.3020    0.3020
     0.1020    0.1020    0.1020];
     
-% Pre process
-% stem(diff(data(:,1)))
 t=data(:,1);
 dt = mean(diff(data(:,1)));
 fs = 1/dt;                                                                  % "Speed data were collected at a sampling rate of 18 Hz" Morin et al. 2021
 % fs = 18; % Hz
 
+%% Our data is already filtered and acceleration is already computed
+% Lets imagine it was not the case, we create a new data set with only "raw" speed and time
+rng(1)
+stretch = 0.3;
+shift = 0;
+noise = stretch*rand(size(data(:,1))) + shift-stretch/2;                    % Add some uniform noise
+
+
+f2 = figure;
+tiledlayout(2,1,'Padding','compact','TileSpacing','compact')
+nexttile
+dataSimu  = [data(:,1) data(:,2)+noise];
+
+fc = 1;
+[b,a] = butter(2,fc/(fs/2),'low');
+vFilt = filtfilt(b,a,dataSimu(:,2));                                        % Zero phase 2nd order lowpass butterworth filtering
+
+
+plot(data(:,1), dataSimu(:,2),'Color',col(end-3,:),'LineWidth',2); hold on
+plot(data(:,1),data(:,2),'Color',col(end,:),'LineWidth',1)
+plot(data(:,1),vFilt,'Color',col(3,:),'LineWidth',1)
+axis([370.3842  409.2903   -1.0000    9.0000])
+legend({'speedOrigin+noise' 'speedOrigin' 'speedFilt'})
+nexttile
+plot(data(:,1),data(:,3),'Color',col(end-3,:),'LineWidth',2); hold on
+accSimu = diff(vFilt)./dt;                                                  % first derivative over time
+plot(data(2:end,1),accSimu,'Color',col(3,:),'LineWidth',1)
+legend({'accOrigine' 'accFromPos+Filter'})
+axis([370.3842  409.2903   -5    5])
+set(gcf,'Units','normalized','Position',[0.1,0.1,0.6,0.4])
+set(findall(gcf,'-property','Box'),'Box','off') % optional
+set(findall(gcf,'-property','Interpreter'),'Interpreter','latex')
+set(findall(gcf,'-property','TickLabelInterpreter'),'TickLabelInterpreter','latex')
+set(findall(gcf,'Type','text','-property','FontSize'),'FontSize',13) 
+set(findall(gcf,'Type','axes','-property','FontSize'),'FontSize',15)
+
+% Data must contain 3 columns: time, speed, acceleration
+data = [data(2:end,1) vFilt(2:end) accSimu];
+
 %% process
+col = [0.1922	0.2118	0.5843; 0.9922    0.6824    0.3804];
+[a0,s0,r2,dataOut] = accSpeedProfile(data);
+
 figure
-
-% only positive acc
-maskPositif = data(:,3)>0;
-dataPlus = data(maskPositif,:);
-% scatter(dataPlus(:,2),dataPlus(:,3),'k.')
-
-% threshold at 3 m/s
-vThresh = 3;
-maskVelocity = dataPlus(:,2)>=vThresh;
-dataThresh = dataPlus(maskVelocity,:);
-% scatter(dataThresh(:,2),dataThresh(:,3),'k.')
-
-% the two max values of acceleration performed for each 0.2 m/s subintervals were selected for further analysis
-[vSorted,indSort]  = sort(dataThresh(:,2));
-accSorted = dataThresh(indSort,3);
-scatter(vSorted,accSorted,7,col(end,:),'filled',...
-    'MarkerFaceAlpha',0.8); hold on
-scatter(dataPlus(dataPlus(:,2)<3,2),dataPlus(dataPlus(:,2)<3,3),...
-    7,col(end-3,:),'filled','MarkerFaceAlpha',0.5)
-
-vMax = max(vSorted);
-[max2th,indMax,speedMax] = deal(cell(numel(vThresh:0.2:vMax),1));
-
-index = 1;
-for vRange = vThresh:0.2:vMax
-    range = vSorted>=vRange & vSorted<=vRange+0.2;
-    [max2th{index},indMax{index}] = maxk(accSorted(range),2);
-    vEquiv = vSorted(range);
-    speedMax{index} = vEquiv(indMax{index});
-    index = index+1;
-end
-hold on
-accCompute = cell2mat(max2th);
-speedCompute = cell2mat(speedMax);
-
-
-scatter(speedCompute,accCompute,50,col(end-2,:),'filled',...
-    'markerfacealpha',1,'markeredgecolor',col(end-1,:))
-
-%% first fit
-f_AccSpeed = @(A0,S0,speed) A0.*(1-(speed./S0));
-
-fit_TC = fittype(f_AccSpeed,'dependent',{'acc'},'independent',{'speed'},'coefficients',{'A0', 'S0'});
-Start=[7 7];
-[fitobject,~,output]  = fit(speedCompute,accCompute,fit_TC,'StartPoint',Start);
-
-%% residuals confidence interval
-
-ci = confint(fitobject,0.95);
-int = abs(fitobject.A0-ci(1));
-predictFirstFit = f_AccSpeed(fitobject.A0,fitobject.S0,speedCompute);
-
-boolOutlier = and(accCompute>=predictFirstFit-int,accCompute<=predictFirstFit+int);
-outliers = ~boolOutlier;
-
-
-% ciResidus = computeCI(output.residuals,0.95)
-% boolOutlier = or(output.residuals<ciResidus(1),output.residuals>ciResidus(2));
-% outliers = boolOutlier;
-
-% pl = plot(fitobject,'-');
-% set(pl,'Color',col(3,:),'LineWidth',1.5,'HandleVisibility','off')
-% plot(speedCompute,confInterval,'linestyle','--','color',col(3,:),'LineWidth',1.5)
-
-%% final fit
-speedSansOutlier = speedCompute(boolOutlier);
-accSansOutlier = accCompute(boolOutlier);
-
-[fitobject2,gof,~]  = fit(speedSansOutlier,accSansOutlier,fit_TC,...
-    'StartPoint',coeffvalues(fitobject));
-C2 = coeffvalues(fitobject2);
-rSquared = gof.rsquare;
-ci = confint(fitobject2);
-
-A0 = C2(1);
-V0 = C2(2);
-scatter(speedSansOutlier,accSansOutlier,50,col(end-2,:),...
-    'filled','markerfacealpha',1,...
-    'markeredgecolor',col(end,:),'LineWidth',1.5)
-
-xq = linspace(0,V0,1000);
-p = plot(xq,fitobject2(xq),'LineStyle','-',...
-                            'Color',col(end-3,:),...
-                            'LineWidth',1.5,...
-                            'MarkerFaceColor',col(end-2,:),...
-                            'HandleVisibility','off');
-xlim([0 V0+2])
-ylim([0 A0+1])
-
-str = {sprintf('$A_0$= %1.2f',A0) sprintf('$S_0$= %1.2f',V0)};
-text([0.2;V0],[A0;0.3],str,'Interpreter','latex')
-ylabel('Acceleration ($m.s^{-2}$)')
-xlabel('Speed ($m.s^{-1}$)')
-legend('')
-
-title('A-S profile')
-strTitle = sprintf('$R^2$= %1.2f',rSquared);
-
-hfig= gcf;
-picturewidth = 18; % set this parameter and keep it forever
-hw_ratio = .8333; % feel free to play with this ratio
-set(findall(hfig,'-property','FontSize'),'FontSize',17) % adjust fontsize to your document
-set(findall(hfig,'-property','Box'),'Box','off') % optional
-set(findall(hfig,'-property','Interpreter'),'Interpreter','latex')
-set(findall(hfig,'-property','TickLabelInterpreter'),'TickLabelInterpreter','latex')
-set(hfig,'Units','centimeters','Position',[3 3 picturewidth hw_ratio*picturewidth])
-pos = get(hfig,'Position');
-set(hfig,'PaperPositionMode','Auto','PaperUnits','centimeters','PaperSize',[pos(3), pos(4)])
-
-subtitle(strTitle,'FontSize',13,'Interpreter','latex')
-set(gca,'TickDir','out');
-
-
+tiledlayout(1,2,'TileSpacing','compact','Padding','compact')
+nexttile
+accSpeedProfile(data);
+title('Basic color')
+nexttile
+accSpeedProfile(data,col);
+title('Your colors')
 toc
 
+% set(gcf,'Units','centimeters','Position',[10,3,28.7,18.5])
+
+figure(f2)
