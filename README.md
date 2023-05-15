@@ -18,7 +18,7 @@ $$a = \frac{dv}{dt}$$
 ```MATLAB
 function [A0,V0,r2,dataOut] = accSpeedProfile(data,col)
 % A0 is the theoretical maximal acceleration (y- intercept of the AS linear relationship)
-% S0 is the theoretical maxi- mal running speed (x-intercept of the AS relationship)
+% S0 is the theoretical maximal running speed (x-intercept of the AS relationship)
 % r2 is the coefficient of determination
 % dataOut is a table with 2 columns of speed and acceleration points retained
 ```
