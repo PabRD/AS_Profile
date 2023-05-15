@@ -3,14 +3,14 @@ in-situ acceleration-speed profile in team sports
 
 ______________________________________
 
-Force velocity profiling is not specific to team sports actions, therefore accelaration-speed profiling can be assessed passively, save some proper testing sessions and bring continuous information about the athlete state of form (Morin et al. 2021).
+Force velocity profiling is not specific to team sports actions and acceleration-speed profiling can be done passively, save some proper testing sessions and bring continuous information about the athlete state of form evolution (Morin et al. 2021).
 
 
 ## Raw data
 
 Raw data is publicly available at https://libm-lab.univ-st-etienne.fr/as-profile/#/home
 
-The example script ``AS_Profiling.m`` uses the time and speed data. A random noise is added to the speed data and then filtered with a 1-Hz lowpass 2nd order Butterworth filter as used in Clavel et al. 2023. Acceleration is computed with the first time derivative of speed.
+The example script ``AS_Profiling_Exemple.m`` uses the time and speed data. A random noise is added to the speed data and then filtered with a 1-Hz lowpass 2nd order Butterworth filter as used in Clavel et al. 2023. Acceleration is computed with the first time derivative of speed.
 $$a = \frac{dv}{dt}$$  
 
 ## Function
@@ -31,7 +31,7 @@ accSpeedProfile(data)
 ![alt text](https://github.com/PabRD/AS_Profile/blob/main/basicColor_AS.png)
 
 
-By specifying a 2 color RGB matric you can personalize the colors of the figure output
+By specifying a 2 color RGB matrix you can personalize the colors of the figure output
 ```MATLAB
 accSpeedProfile(data,col)
 ```
